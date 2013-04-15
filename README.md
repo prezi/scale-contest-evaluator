@@ -9,3 +9,5 @@ Download test log and decompress it:
 
 Evaluate:
     ./simple_competitor.py < week_1.log | ./evaluator.py
+
+For more information please visit https://prezi.com/scale/
