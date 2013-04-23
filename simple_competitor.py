@@ -21,15 +21,18 @@
 #
 import sys
 
+
 def procLine(line):
     if line:
         return dict(zip(('date', 'time', 'id', 'queue', 'length'), line.split()))
+
 
 def servers(date_time, command):
     if date_time:
         for i in range(100):
             for kind in ['general', 'url', 'export']:
                 sys.stdout.write(' '.join((date_time['date'], date_time['time'], command, kind, '\n')))
+
 
 def main():
     line = sys.stdin.readline()

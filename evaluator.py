@@ -29,6 +29,7 @@ import re
 import sys
 import uuid
 
+
 class Event(object):
     def __init__(self, data_dict):
         fields = ['year', 'month', 'day', 'hour', 'minute', 'second']
@@ -37,6 +38,7 @@ class Event(object):
     def __cmp__(self, other):
         return cmp(self.timestamp, other.timestamp)
 
+
 class Job(Event):
     def __init__(self, data_dict):
         super(Job, self).__init__(data_dict)
@@ -44,18 +46,24 @@ class Job(Event):
         self.elapsed = float(data_dict['elapsed'])
         self.guid = data_dict['guid']
 
+
 class Command(Event):
     def __init__(self, data_dict):
         super(Command, self).__init__(data_dict)
         self.category = data_dict['category']
         self.cmd = data_dict['cmd']
 
+
 class Machine(object):
+    # VMs are billed by the hour (3600 seconds).
     BILLING_UNIT = 3600
+    # Boot time is 2 minutes (120 seconds).
     MACHINE_INACTIVE = 120
 
     def __init__(self, booted, world):
         self.active_from = booted + self.MACHINE_INACTIVE
+        # busy_till specifies when the job currently processed by the
+        # node will end (if any).
         self.busy_till = 0
         self.world = world
         self.terminated = False
@@ -75,14 +83,21 @@ class Machine(object):
     def is_active(self, now):
         return now >= self.active_from and self.busy_till <= now
 
+
 class WithLog(object):
     log = logging.getLogger('prezi.com')
 
     def info(self, *args):
         self.log.info(*args)
 
+
 class State(WithLog):
+
+    # TRIAL_ENDS refers to the grace period of the first 24 hours
+    # during which competitors will not be disqualified or penalized.
     TRIAL_ENDS = 24 * 60 * 60
+    # After the grace period, 5 seconds is the maximum time a job can
+    # spend in the queue.
     MAX_QUEUE_TIME = 5
 
     def __init__(self):
@@ -161,6 +176,7 @@ class State(WithLog):
         return self.billed - bill_previous
 
     def bill_it(self, machine):
+        """ Computes the cost of a single virtual machine. """
         if self.now > self.trial:
             when_stops = max(self.now, machine.busy_till)
             billing_start = max(self.trial, machine.running_since)
@@ -175,6 +191,7 @@ class State(WithLog):
             if self.overwait:
                 return -1
         return self.billed
+
 
 def read_events(fd):
     common = r'^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2}) (?P<hour>\d\d):(?P<minute>\d\d):(?P<second>\d\d) '
@@ -194,13 +211,16 @@ def read_events(fd):
         if m:
             yield Command(m.groupdict())
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Prezi scale contest evaluator')
     parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='turn on debugging')
     return parser.parse_known_args()
 
+
 def set_logger():
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
 
 def main():
     args, rest = parse_arguments()
