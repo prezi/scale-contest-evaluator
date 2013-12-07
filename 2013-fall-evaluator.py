@@ -261,7 +261,7 @@ class State(WithLog):
     def evaluate(self):
         for category in ['default', 'export', 'url']:
             self.process_events(category)
-            for machine in self.machines[category]:
+            for machine in list(self.machines[category]):
                 self.terminate(machine, category)
             if self.overwait:
                 return -1
